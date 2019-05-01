@@ -6,51 +6,47 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.List;
 
 public class ChatServerThread extends Thread {
 	private Socket socket;
+	private List<Writer> listWriter;
 	private String nickname;
-	private List<Writer> writePool;
+	private BufferedReader bufferedReader;
+	private PrintWriter printWriter;
 
-	public ChatServerThread(Socket socket, List<Writer> writePool) {
+	public ChatServerThread(Socket socket, List<Writer> listWriter) {
 		this.socket = socket;
-		this.writePool = writePool;
+		this.listWriter = listWriter;
 	}
 
 	@Override
 	public void run() {
-		InetSocketAddress inetRemoteSocketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
-		String remoteHostAddress = inetRemoteSocketAddress.getAddress().getHostAddress();
-		int remotePort = inetRemoteSocketAddress.getPort();
-		log("Connected by client[" + remoteHostAddress + ":" + remotePort + "]," + socket);
-
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
-			PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
-			while (true) {
-				String request = br.readLine();
-				log("request=" + request);
-				String[] tokens = request.split(":");
-				log("tokens=" + Arrays.toString(tokens));
-//				if (request == null) {
-//					log("클라이언트로 부터 연결 끊김");
-//					break;
-//				}
+			// 스트림 얻기
+			bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
+			printWriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
-				if ("join".equals(tokens[0])) {
-					doJoin(tokens[1], pw);
-				} else if ("msg".equals(tokens[0])) {
-					doMsg(tokens[1], pw);
-				} else if ("quit".equals(tokens[0])) {
-					doQuit(tokens[1], pw);
-				} else {
-					ChatServerApp.log("Error : 알 수 없는 요청입니다...(" + tokens[0] + ")");
+			// 요청 처리
+			while (true) {
+				String request = bufferedReader.readLine(); 
+				if (request == null) {
+					doQUit(printWriter);
+					break;
 				}
-				// 프로토콜 분석
+
+				// 플로토콜 분석
+				String[] tokens = request.split(":");
+				if ("join".equals(tokens[0])) {
+					doJoin(tokens[1], printWriter);
+				} else if ("message".equals(tokens[0])) {
+					doMessage(tokens[1]);
+				} else if ("quit".equals(tokens[0])) {
+					doQUit(printWriter);
+				} else {
+					ChatServerApp.log("에러:알 수 없는 요청(" + tokens[0] + ")");
+				}
 			}
 
 		} catch (IOException e) {
@@ -58,39 +54,49 @@ public class ChatServerThread extends Thread {
 		}
 	}
 
-	private void doQuit(String quit, Writer pw) {
+	private void doQUit(Writer writer) {
+		removeWriter(writer);
+		String data = nickname + "님이 퇴장 하였습니다.";
+		broadcast(data);
 	}
 
-	private void doMsg(String msg, Writer pw) {
+	private void removeWriter(Writer writer) {
+		synchronized (writer) {
+			listWriter.remove(writer);
+		}
 	}
 
-	private void doJoin(String nickname, Writer pw) {
+	private void doMessage(String string) {
+		broadcast(this.nickname + ":" + string);
+	}
+
+	private void doJoin(String nickname, Writer writer) {
 		this.nickname = nickname;
-		String data = nickname + "님이 참여하였습니다.";
-		System.out.println(data);
-		addWriter(pw);
-		brocast(data);
-		pw.println("join:ok");
-		pw.flush();
+		String data = nickname + "님이 참여하셨습니다.";
+		broadcast(data);
+		// WriterPool에 저장
+		addWriter(writer);
+
+		// ack(클라이언트에게 전달)
+		printWriter.println("join:ok");
+		printWriter.flush();
 	}
 
-	private void brocast(String data) {
-		synchronized (writePool) {
-			for (PrintWriter tmp : writePool) {
-				PrintWriter printWriter = tmp;
-				printWriter.println(data);
+	private void broadcast(String data) {
+		synchronized (listWriter) {
+			for (Writer tmp : listWriter) {
+				PrintWriter printWriter = (PrintWriter) tmp;
+				System.out.println("BroadCastdata="+data);
+				printWriter.print(data);
 				printWriter.flush();
 			}
 		}
 	}
 
-	private void addWriter(Writer pw) {
-		synchronized (writePool) {
-			writePool.add(pw);
+	private void addWriter(Writer writer) {
+		synchronized (listWriter) {
+			listWriter.add(writer);
 		}
 	}
 
-	public static void log(String log) {
-		System.out.println("[Client] " + log);
-	}
 }

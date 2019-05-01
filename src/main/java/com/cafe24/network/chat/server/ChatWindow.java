@@ -29,6 +29,7 @@ public class ChatWindow {
 	private TextField textField;
 	private TextArea textArea;
 	private Socket socket;
+	private String nickname;
 
 	public ChatWindow(String name, Socket socket) {
 		frame = new Frame(name);
@@ -37,6 +38,9 @@ public class ChatWindow {
 		textField = new TextField();
 		textArea = new TextArea(30, 80);
 		this.socket = socket;
+		this.nickname = name;
+		Thread inThread = new innerThread(socket);
+		inThread.start();
 	}
 
 	private void finish() {
@@ -90,40 +94,45 @@ public class ChatWindow {
 
 	}
 
-	public class innerThread extends Thread {
-
-		@Override
-		public void run() {
-			try {
-				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
-				System.out.println(br.readLine());
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-//			PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
-//			updateTextArea(message);
-
-		}
-
-	}
-
 	// 쓰레드에서 이놈을 불러야함
 	private void updateTextArea(String message) {
 		textArea.append(message);
 		textArea.append("\n");
+
 	}
 
 	private void sendMessage() {
 		String message = textField.getText();
-//		pw.println("MSG:" + message);
+//		pw.println("msg:" + message);
 
 		// test
 		// 지워야 하는 코드(쓰레드에 들어가야함)
-//		updateTextArea(message + ":" + socket);
+		updateTextArea("[" + this.nickname + "] : " + message);
 
 		textField.setText("");
 		textField.requestFocus();
+	}
+
+	public class innerThread extends Thread {
+		private Socket socket;
+
+		public innerThread(Socket socket) {
+			this.socket = socket;
+		}
+
+		@Override
+		public void run() {
+			try {
+				BufferedReader bufferedReader = new BufferedReader(
+						new InputStreamReader(socket.getInputStream(), "utf-8"));
+				while (true) {
+					String msg = bufferedReader.readLine();
+					updateTextArea(msg);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 	}
 }

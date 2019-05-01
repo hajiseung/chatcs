@@ -1,23 +1,19 @@
 package com.cafe24.network.chat.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-
+//main thread
 public class ChatServerApp {
 	private static final int PORT = 7000;
 
 	public static void main(String[] args) {
 		// 서버 소켓 생성
-		List<Writer> writePool = new ArrayList<Writer>();
+		List<Writer> listWriter = new ArrayList<Writer>();
 		ServerSocket serverSocket = null;
 
 		try {
@@ -29,11 +25,8 @@ public class ChatServerApp {
 			while (true) {
 				// 클라이언트와의 연결대기
 				Socket socket = serverSocket.accept();
-
-				log("전전전");
-				Thread thread = new ChatServerThread(socket, writePool);
+				Thread thread = new ChatServerThread(socket, listWriter);
 				thread.start();
-				log("후후후");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
