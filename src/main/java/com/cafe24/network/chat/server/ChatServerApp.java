@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
 //main thread
 public class ChatServerApp {
 	private static final int PORT = 7000;
@@ -30,6 +31,14 @@ public class ChatServerApp {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (serverSocket != null && serverSocket.isClosed() == false) {
+					serverSocket.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

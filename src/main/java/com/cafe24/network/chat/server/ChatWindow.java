@@ -20,8 +20,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class ChatWindow {
+//이 클래스에서 pw쓰면 ChatServerThread로 전달이 되어진다
 
 	private Frame frame;
 	private Panel pannel;
@@ -29,7 +31,8 @@ public class ChatWindow {
 	private TextField textField;
 	private TextArea textArea;
 	private Socket socket;
-	private String nickname;
+	private PrintWriter pw;
+	private Thread inThread;
 
 	public ChatWindow(String name, Socket socket) {
 		frame = new Frame(name);
@@ -38,14 +41,22 @@ public class ChatWindow {
 		textField = new TextField();
 		textArea = new TextArea(30, 80);
 		this.socket = socket;
-		this.nickname = name;
-		Thread inThread = new innerThread(socket);
+		inThread = new innerThread(socket);
 		inThread.start();
 	}
 
 	private void finish() {
 		// Socket 정리
-		System.exit(0);
+		pw.println("quit");
+		try {
+			System.exit(0);
+			inThread.join();
+			socket.close();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void show() {
@@ -98,16 +109,21 @@ public class ChatWindow {
 	private void updateTextArea(String message) {
 		textArea.append(message);
 		textArea.append("\n");
-
 	}
 
 	private void sendMessage() {
 		String message = textField.getText();
-//		pw.println("msg:" + message);
+		try {
+			pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
+			if ("quit".equals(message)) {
+				finish();
+			} else {
+				pw.println("message:" + message);
+			}
 
-		// test
-		// 지워야 하는 코드(쓰레드에 들어가야함)
-		updateTextArea("[" + this.nickname + "] : " + message);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		textField.setText("");
 		textField.requestFocus();
@@ -129,6 +145,8 @@ public class ChatWindow {
 					String msg = bufferedReader.readLine();
 					updateTextArea(msg);
 				}
+			} catch (SocketException e) {
+				System.out.println("강제종료");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

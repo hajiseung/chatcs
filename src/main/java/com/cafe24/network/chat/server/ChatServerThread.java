@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.util.List;
 
+//여기서 printWriter 사용하면 ChatClientApp로 전달되어진다.
 public class ChatServerThread extends Thread {
 	private Socket socket;
 	private List<Writer> listWriter;
@@ -30,13 +31,14 @@ public class ChatServerThread extends Thread {
 
 			// 요청 처리
 			while (true) {
-				String request = bufferedReader.readLine(); 
+				String request = bufferedReader.readLine();
 				if (request == null) {
 					doQUit(printWriter);
 					break;
 				}
 
-				// 플로토콜 분석
+				// 프로토콜 분석
+				System.out.println(request);
 				String[] tokens = request.split(":");
 				if ("join".equals(tokens[0])) {
 					doJoin(tokens[1], printWriter);
@@ -44,6 +46,7 @@ public class ChatServerThread extends Thread {
 					doMessage(tokens[1]);
 				} else if ("quit".equals(tokens[0])) {
 					doQUit(printWriter);
+					break;
 				} else {
 					ChatServerApp.log("에러:알 수 없는 요청(" + tokens[0] + ")");
 				}
@@ -56,7 +59,7 @@ public class ChatServerThread extends Thread {
 
 	private void doQUit(Writer writer) {
 		removeWriter(writer);
-		String data = nickname + "님이 퇴장 하였습니다.";
+		String data = this.nickname + "님이 퇴장 하였습니다.";
 		broadcast(data);
 	}
 
@@ -67,7 +70,7 @@ public class ChatServerThread extends Thread {
 	}
 
 	private void doMessage(String string) {
-		broadcast(this.nickname + ":" + string);
+		broadcast("[" + this.nickname + "]:" + string);
 	}
 
 	private void doJoin(String nickname, Writer writer) {
@@ -86,8 +89,7 @@ public class ChatServerThread extends Thread {
 		synchronized (listWriter) {
 			for (Writer tmp : listWriter) {
 				PrintWriter printWriter = (PrintWriter) tmp;
-				System.out.println("BroadCastdata="+data);
-				printWriter.print(data);
+				printWriter.println(data);
 				printWriter.flush();
 			}
 		}

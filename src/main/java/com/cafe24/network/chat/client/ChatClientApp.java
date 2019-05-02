@@ -12,7 +12,7 @@ import java.util.Scanner;
 import com.cafe24.network.chat.server.ChatWindow;
 
 public class ChatClientApp {
-	private static final String SERVER_IP = "192.168.0.5";
+	private static final String SERVER_IP = "192.168.1.3";
 	private static final int SERVER_PORT = 7000;
 
 	public static void main(String[] args) {
@@ -32,15 +32,15 @@ public class ChatClientApp {
 				System.out.print(">>>");
 				nickname = scn.nextLine();
 				if (nickname.isEmpty() == false) {
+					// ChatServerThread로 전달
 					printWriter.println("join:" + nickname);
 					printWriter.flush();
 					break;
 				}
 				System.out.println("대화명은 한글자 이상 입력해야 합니다.\n");
 			}
+			scn.close();
 			String data = bufferedReader.readLine();
-			System.out.println("client reader data:" + data);
-			// chatClientReceiveThread시작
 			new ChatWindow(nickname, socket).show();
 		} catch (IOException e) {
 			e.printStackTrace();
