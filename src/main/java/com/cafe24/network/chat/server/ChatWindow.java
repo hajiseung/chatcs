@@ -47,9 +47,9 @@ public class ChatWindow {
 
 	private void finish() {
 		// Socket 정리
-		pw.println("quit");
 		try {
 			System.exit(0);
+			pw.println("quit");
 			inThread.join();
 			socket.close();
 		} catch (InterruptedException e1) {

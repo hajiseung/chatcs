@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 
 //여기서 printWriter 사용하면 ChatClientApp로 전달되어진다.
@@ -52,6 +53,8 @@ public class ChatServerThread extends Thread {
 				}
 			}
 
+		} catch (SocketException e) {
+			System.out.println("강제종료");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
