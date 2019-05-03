@@ -21,7 +21,7 @@ public class ChatServerApp {
 			serverSocket = new ServerSocket();
 			// 서버 소켓 바인딩
 			serverSocket.bind(new InetSocketAddress("0.0.0.0", PORT));
-			log("server start...[port:" + PORT + "]");
+			log("서버가 구동되었습니다...[port:" + PORT + "]");
 
 			while (true) {
 				// 클라이언트와의 연결대기

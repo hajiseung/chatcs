@@ -44,7 +44,7 @@ public class ChatClientApp {
 			new ChatWindow(nickname, socket).show();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} 
 	}
 
 	public static void log(String log) {

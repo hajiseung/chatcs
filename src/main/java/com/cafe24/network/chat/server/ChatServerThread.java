@@ -37,7 +37,6 @@ public class ChatServerThread extends Thread {
 					doQUit(printWriter);
 					break;
 				}
-
 				// 프로토콜 분석
 				System.out.println(request);
 				String[] tokens = request.split(":");
@@ -52,9 +51,9 @@ public class ChatServerThread extends Thread {
 					ChatServerApp.log("에러:알 수 없는 요청(" + tokens[0] + ")");
 				}
 			}
-
 		} catch (SocketException e) {
-			System.out.println("강제종료");
+//			doQUit(writer);
+			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

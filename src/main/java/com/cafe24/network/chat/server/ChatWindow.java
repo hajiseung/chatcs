@@ -41,6 +41,14 @@ public class ChatWindow {
 		textField = new TextField();
 		textArea = new TextArea(30, 80);
 		this.socket = socket;
+
+		try {
+			pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		inThread = new innerThread(socket);
 		inThread.start();
 	}
@@ -48,8 +56,9 @@ public class ChatWindow {
 	private void finish() {
 		// Socket 정리
 		try {
-			System.exit(0);
 			pw.println("quit");
+			pw.flush();
+			System.exit(0);
 			inThread.join();
 			socket.close();
 		} catch (InterruptedException e1) {
@@ -57,6 +66,8 @@ public class ChatWindow {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+//		pw.println("quit");
+//		System.exit(0);
 	}
 
 	public void show() {
@@ -100,6 +111,7 @@ public class ChatWindow {
 				finish();
 			}
 		});
+
 		frame.setVisible(true);
 		frame.pack();
 
@@ -113,18 +125,11 @@ public class ChatWindow {
 
 	private void sendMessage() {
 		String message = textField.getText();
-		try {
-			pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
-			if ("quit".equals(message)) {
-				finish();
-			} else {
-				pw.println("message:" + message);
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+		if ("quit".equals(message)) {
+			finish();
+		} else {
+			pw.println("message:" + message);
 		}
-
 		textField.setText("");
 		textField.requestFocus();
 	}
@@ -145,8 +150,6 @@ public class ChatWindow {
 					String msg = bufferedReader.readLine();
 					updateTextArea(msg);
 				}
-			} catch (SocketException e) {
-				System.out.println("강제종료");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
